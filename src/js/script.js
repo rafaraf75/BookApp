@@ -6,39 +6,58 @@ function render() {
   booksList.innerHTML = '';
 
   for (const book of dataSource.books) {
-    const shouldBeHidden =
-      (filters.includes('adults') && !book.details.adults) ||
-      (filters.includes('nonFiction') && !book.details.nonFiction);
+    const generatedHTML = templateBook(book);
+    const bookElement = utils.createDOMFromHTML(generatedHTML);
+    booksList.appendChild(bookElement);
+  }
+  filterBooks();
+}
 
-    if (!shouldBeHidden) {
-      const generatedHTML = templateBook(book);
-      const bookElement = utils.createDOMFromHTML(generatedHTML);
-      booksList.appendChild(bookElement);
+
+function filterBooks() {
+  for (const book of dataSource.books) {
+    let shouldBeHidden = false;
+
+    for (const filter of filters) {
+      if (!book.details[filter]) {
+        shouldBeHidden = true;
+        break;
+      }
     }
+
+    const bookElement = document.querySelector(`.book__image[data-id="${book.id}"]`);
+
+    if (bookElement)
+      if (shouldBeHidden) {
+        bookElement.classList.add('hidden');
+      } else {
+        bookElement.classList.remove('hidden');
+      }
   }
 }
 
 function initActions() {
-  const filtersContainer = document.querySelector('.filters');
+  const filtersForm = document.querySelector('.filters');
 
-  filtersContainer.addEventListener('click', function (event) {
-    const clickedElement = event.target;
+  filtersForm.addEventListener('click', function (event) {
     if (
       event.target.tagName === 'INPUT' &&
             event.target.type === 'checkbox' &&
             event.target.name === 'filter'
     ) {
-      const filterValue = clickedElement.value;
+      const filterValue = event.target.value;
 
-      if (clickedElement.checked && !filters.includes(filterValue)) {
+      if (event.target.checked && !filters.includes(filterValue)) {
         filters.push(filterValue);
-      } else if (!clickedElement.checked && filters.includes(filterValue)) {
+      } else if (!event.target.checked && filters.includes(filterValue)) {
         const index = filters.indexOf(filterValue);
         filters.splice(index, 1);
       }
       console.log('Current Filters:', filters);
+      filterBooks();
     }
   });
 }
 render();
 initActions();
+
